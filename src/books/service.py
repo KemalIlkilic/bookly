@@ -4,6 +4,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from .schemas import BookCreateModel, BookUpdateModel
 from sqlmodel import select, desc
 from .models import Book
+from datetime import datetime
 
 class BookService:
     #Sessions are used to interact with the database:
@@ -19,7 +20,11 @@ class BookService:
         return book if book else None
 
     async def create_book(self, book_data : BookCreateModel, session:AsyncSession):
-        new_book = Book( **book_data.model_dump() )
+        book_dict = book_data.model_dump(exclude_unset=True)
+        new_book = Book(**book_dict)
+        if book_dict.get('published_date'):
+            new_book.published_date = datetime.strptime(str(book_dict['published_date']), "%Y-%m-%d")
+        
         #adding an object to the session marks it as pending, meaning it will be inserted into the database when the transaction is committed.
         #session.add() is not an asynchronous operation because It's not communicating with the database at this point
         session.add(new_book)
@@ -38,11 +43,12 @@ class BookService:
         Without exclude_unset == True , {"title": "New Title","author": None, "published_date": None }
         """
         update_data_dict = update_data.model_dump(exclude_unset=True)
-        for key,value in update_data_dict.items():
-            #setattr(x, 'y', v) is equivalent to x.y = v
-            # x.y => . ile basiyor ya gucu oradan geliyor.
-            setattr(book_to_update, key, value)
+        book_to_update.sqlmodel_update(update_data_dict)
+        #Adds the modified book instance to the session, Marks it for update in the database
+        session.add(book_to_update)
         await session.commit()
+        #Refreshes the book instance from the database, Ensures we have the most up-to-date data
+        await session.refresh(book_to_update)
         return book_to_update
     
 
@@ -54,4 +60,4 @@ class BookService:
         
         await session.delete(book_to_delete)
         await session.commit()
-        return {}
+        return {"message" : "book deleted successfully"}
