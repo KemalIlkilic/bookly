@@ -13,7 +13,7 @@ class BookService:
         result = await session.exec(statement)
         return result.all()
 
-    async def get_book(self, book_uid : str ,session:AsyncSession):
+    async def get_book(self, book_uid : str ,session:AsyncSession) -> dict:
         statement = select(Book).where(Book.uid == book_uid )
         result = await session.exec(statement)
         book = result.first()
@@ -34,30 +34,34 @@ class BookService:
 
     async def update_book(self, book_uid : str , update_data : BookUpdateModel, session:AsyncSession):
         book_to_update = await self.get_book(book_uid,session)
-        if not book_to_update:
+        if book_to_update is None:
             return None
-        #None olan key-value'lari siliyor. Bosuna yer kaplamiyorlar.
-        #This prevents None values or default values from overwriting existing fields in the database.
-        """
-        With exclude_unset == True , {"title": "New Title"}
-        Without exclude_unset == True , {"title": "New Title","author": None, "published_date": None }
-        """
-        update_data_dict = update_data.model_dump(exclude_unset=True)
-        book_to_update.sqlmodel_update(update_data_dict)
-        #Adds the modified book instance to the session, Marks it for update in the database
-        session.add(book_to_update)
-        await session.commit()
-        #Refreshes the book instance from the database, Ensures we have the most up-to-date data
-        await session.refresh(book_to_update)
-        return book_to_update
+        if book_to_update:
+            #This prevents None values or default values from overwriting existing fields in the database.
+            #None olan key-value'lari siliyor. Bosuna yer kaplamiyorlar.ß
+            """
+            With exclude_unset == True , {"title": "New Title"}
+            Without exclude_unset == True , {"title": "New Title","author": None, "published_date": None }
+            """
+            update_data_dict = update_data.model_dump(exclude_unset=True)
+            book_to_update.sqlmodel_update(update_data_dict)
+            #Adds the modified book instance to the session, Marks it for update in the database
+            session.add(book_to_update)
+            await session.commit()
+            #Refreshes the book instance from the database, Ensures we have the most up-to-date data
+            await session.refresh(book_to_update)
+            return book_to_update
     
 
     async def delete_book(self, book_uid : str ,session:AsyncSession):
         book_to_delete = await self.get_book(book_uid,session)
 
-        if not book_to_delete:
+        if book_to_delete is not None:
+            await session.delete(book_to_delete)
+
+            await session.commit()
+
+            return {}
+
+        else:
             return None
-        
-        await session.delete(book_to_delete)
-        await session.commit()
-        return {"message" : "book deleted successfully"}
