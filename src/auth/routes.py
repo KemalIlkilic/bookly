@@ -7,12 +7,15 @@ from typing import Annotated
 from fastapi.exceptions import  HTTPException
 from .utils import create_access_token, decode_token, verify_password
 from fastapi.responses import JSONResponse
-from datetime import timedelta
+from datetime import timedelta, datetime
+from .dependencies import RefreshTokenBearer
 
 user_service = UserService()
 auth_router = APIRouter()
+refresh_token_bearer = RefreshTokenBearer()
 
 MyAsyncSession = Annotated[AsyncSession, Depends(get_session)]
+RefreshTokenDetails = Annotated[dict,Depends(refresh_token_bearer)]
 
 REFRESH_TOKEN_EXPIRY=7
 
@@ -55,3 +58,12 @@ async def login_users(login_data: UserLoginModel, session : MyAsyncSession):
                 }
             )
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid email or password")
+
+
+@auth_router.get('/refresh_token')
+async def get_new_access_token(token_details : RefreshTokenDetails):
+    expiry_timestamp = token_details["exp"]
+    if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
+        new_access_token = create_access_token(user_data=token_details["user"])
+        return JSONResponse(content={"access_token": new_access_token})
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired refresh token")
