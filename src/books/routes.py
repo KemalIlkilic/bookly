@@ -16,7 +16,7 @@ UserDetails = Annotated[dict,Depends(access_token_bearer)]
 
 @book_router.get("/", response_model=List[Book])
 async def get_all_books(session : MyAsyncSession, user_details : UserDetails):
-    #user_details : {'user': {'email': 'kemal@dmca.io', 'user_uid': '2e53a352-c25f-49a1-baeb-6b61cd281461'},
+    #user_details : {'user': {'email': 'kemal@dmca.io', 'user_uid': '2e53a352-c25f-61cd281461'},
     #              'exp': 1729468596, 'jti': '<function uuid4 at 0x100f5cc20>', 'refresh': False}
     print(user_details)
     books = await book_service.get_all_books(session)
