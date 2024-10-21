@@ -10,13 +10,13 @@ class TokenBearer(HTTPBearer):
 
     async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
         creds = await super().__call__(request)
-        #token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImVtYWlsIjoia2VtYWxAZG1jYS5pbyIsInVzZXJfdWlkIjoiMmU1M2EzNTItYzI1Zi00OWExLWJhZWItNmI2MWNkMjgxNDYxIn0sImV4cCI6MTcyOTQ2ODU5NiwianRpIjoiPGZ1bmN0aW9uIHV1aWQ0IGF0IDB4MTAwZjVjYzIwPiIsInJlZnJlc2giOmZhbHNlfQ.ChXWrUpxC7rvyAwvGBHx-jh3-HQ289TGiXV7JXN353A
+        #token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImVtYWlsIjoia2VtYWxAZG1jYS5pbyIsInVzZXJfdWlkIjoiMmWExLWJhZWItNmI2MWNkMjgxNDYxIn0sImV4cCI6MTcyOTQ2ODU5NiwianRpIjoiPGZ1bmN0aW9uIHV1aWQ0IGF0IDB4MTAwZjVjYzIwPiIsInJlZnJlc2giOmZhbHNlfQ.ChXWrUpxC7rvyAwvGBHx-jh3-HQ289TGiXV7JXN353A
         token = creds.credentials
 
         if not self.token_valid(token):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid or expired token")
         
-        #token_data : {'user': {'email': 'kemal@dmca.io', 'user_uid': '2e53a352-c25f-49a1-baeb-6b61cd281461'},
+        #token_data : {'user': {'email': 'kemal@dmca.io', 'user_uid': '2e53a3'},
         #              'exp': 1729468596, 'jti': '<function uuid4 at 0x100f5cc20>', 'refresh': False}
         token_data = decode_token(token)
         if not token_data:
