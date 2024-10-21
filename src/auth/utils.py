@@ -32,6 +32,14 @@ def create_access_token(user_data: dict, expiry: timedelta = None, refresh : boo
         key=Config.JWT_SECRET,
         algorithm=Config.JWT_ALGORITHM
     )
+    """ token : 
+    {
+    'user': {'email': 'kemal@dmca.io', 'user_uid': '2e53a352-c25f-49a1-baeb-6b61cd281461'},
+     'exp': 1729468596,
+     'jti': '<function uuid4 at 0x100f5cc20>', 
+     'refresh': False
+     }
+    """
     return token
 
 def decode_token(token : str) -> dict:
