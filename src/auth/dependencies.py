@@ -3,6 +3,7 @@ from fastapi import Request , status
 from fastapi.security.http import HTTPAuthorizationCredentials
 from .utils import decode_token
 from fastapi.exceptions import HTTPException
+from src.db.redis import token_in_blocklist
 
 class TokenBearer(HTTPBearer):
     def __init__(self, auto_error = True):
@@ -14,7 +15,11 @@ class TokenBearer(HTTPBearer):
         token = creds.credentials
 
         if not self.token_valid(token):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid or expired token")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={
+                "error": "This token is invalid or expired",
+                "resolution": "Please get new token"
+            })
+        
         
         #token_data : {'user': {'email': 'kemal@dmca.io', 'user_uid': '2e53a3'},
         #              'exp': 1729468596, 'jti': '<function uuid4 at 0x100f5cc20>', 'refresh': False}
@@ -22,6 +27,11 @@ class TokenBearer(HTTPBearer):
         if not token_data:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="There is no data in token_data")
         
+        if await token_in_blocklist(token_data['jti']):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={
+                "error": "This token is invalid or has been revoked",
+                "resolution": "Please get new token"
+            })
         """
         When the __call__ method runs, it calls self.verify_token_data(token_data).
         The interesting part is that self will refer to either an AccessTokenBearer or RefreshTokenBearer instance, not the base TokenBearer.
