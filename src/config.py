@@ -16,5 +16,6 @@ class Settings(BaseSettings):
 
 Config = Settings()
 
+print(Config)
 #unset JWT_SECRET
 #unset JWT_ALGORITHM
