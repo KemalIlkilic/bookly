@@ -1,14 +1,36 @@
+from typing import Annotated
 from fastapi.security import HTTPBearer
-from fastapi import Request , status
+from fastapi import Request , status, Depends
 from fastapi.security.http import HTTPAuthorizationCredentials
 from .utils import decode_token
 from fastapi.exceptions import HTTPException
 from src.db.redis import token_in_blocklist
+from src.db.main import get_session
+from sqlmodel.ext.asyncio.session import AsyncSession
+from .service import UserService
+
 
 class TokenBearer(HTTPBearer):
     def __init__(self, auto_error = True):
         super().__init__(auto_error=auto_error)
 
+    """
+    The __call__ method runs whenever an instance of the class is used as a function.
+    In your FastAPI application, this happens when the token bearer is used as a dependency.
+
+    #1. First we create an instance of TokenBearer (or its subclasses)
+    access_token_bearer = AccessTokenBearer()
+    #2. Then we use it as a dependency in a route
+    @router.get("/protected")
+    async def protected_route(token_data: Annotated[dict, Depends(access_token_bearer)]):
+        return {"message": "Protected data"}
+
+    When this route is accessed, FastAPI will:
+
+    1)See that there's a dependency Depends(access_token_bearer)
+    2)Call the access_token_bearer instance as if it were a function
+    3)This triggers the __call__ method
+    """
     async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
         creds = await super().__call__(request)
         #token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImVtYWlsIjoia2VtYWxAZG1jYS5pbyIsInVzZXJfdWlkIjoiMmWExLWJhZWItNmI2MWNkMjgxNDYxIn0sImV4cCI6MTcyOTQ2ODU5NiwianRpIjoiPGZ1bmN0aW9uIHV1aWQ0IGF0IDB4MTAwZjVjYzIwPiIsInJlZnJlc2giOmZhbHNlfQ.ChXWrUpxC7rvyAwvGBHx-jh3-HQ289TGiXV7JXN353A
@@ -63,9 +85,14 @@ class RefreshTokenBearer(TokenBearer):
         if token_data and not token_data["refresh"]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please provide an refresh token")
 
-
-
-
+access_token_bearer = AccessTokenBearer()
+AccessTokenDetails = Annotated[dict,Depends(access_token_bearer)]
+MyAsyncSession = Annotated[AsyncSession, Depends(get_session)]
+user_service = UserService()
+async def get_current_user(token_details : AccessTokenDetails ,session : MyAsyncSession):
+    user_email = token_details["user"]["email"]
+    user = await user_service.get_user_by_email(user_email, session)
+    return user
 
 
 
