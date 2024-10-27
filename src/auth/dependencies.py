@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any, List
 from fastapi.security import HTTPBearer
 from fastapi import Request , status, Depends
 from fastapi.security.http import HTTPAuthorizationCredentials
@@ -8,6 +8,7 @@ from src.db.redis import token_in_blocklist
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from .service import UserService
+from src.auth.models import User
 
 
 class TokenBearer(HTTPBearer):
@@ -95,9 +96,6 @@ async def get_current_user(token_details : AccessTokenDetails ,session : MyAsync
     return user
 
 
-
-
-
 """
 # Creating instances
 access_checker = AccessTokenBearer()
@@ -122,3 +120,16 @@ token_data["refresh"] = True
 access_checker.verify_token_data(token_data)   # Raises HTTPException
 refresh_checker.verify_token_data(token_data)  # Succeeds
 """
+
+
+
+class RoleChecker:
+    def __init__(self, allowed_roles : List[str]) -> None:
+        self.allowed_roles =  allowed_roles
+
+    def __call__(self, current_user : Annotated[User,Depends(get_current_user)]) -> Any:
+        if current_user.role in self.allowed_roles:
+            return True
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail = "You are not allowed to perform this action")

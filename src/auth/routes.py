@@ -8,7 +8,7 @@ from fastapi.exceptions import  HTTPException
 from .utils import create_access_token, decode_token, verify_password
 from fastapi.responses import JSONResponse
 from datetime import timedelta, datetime
-from .dependencies import RefreshTokenBearer, AccessTokenBearer, get_current_user
+from .dependencies import RefreshTokenBearer, AccessTokenBearer, get_current_user, RoleChecker
 from src.db.redis import add_jti_to_blocklist
 
 user_service = UserService()
@@ -16,9 +16,15 @@ auth_router = APIRouter()
 refresh_token_bearer = RefreshTokenBearer()
 access_token_bearer = AccessTokenBearer()
 
+
 MyAsyncSession = Annotated[AsyncSession, Depends(get_session)]
 RefreshTokenDetails = Annotated[dict,Depends(refresh_token_bearer)]
 AccessTokenDetails = Annotated[dict,Depends(access_token_bearer)]
+
+# Instance creation - __init__ runs immediately
+AdminOnly = Annotated[bool, Depends(RoleChecker(["admin"]))]
+UserAndAdmin = Annotated[bool, Depends(RoleChecker(["admin", "user"]))]
+
 
 REFRESH_TOKEN_EXPIRY=7
 
@@ -72,7 +78,14 @@ async def get_new_access_token(token_details : RefreshTokenDetails):
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired refresh token")
 
 @auth_router.get("/me")
-async def get_current_user(user = Depends(get_current_user)):
+async def get_current_user(authorized : UserAndAdmin ,user = Depends(get_current_user)):
+    #RoleChecker Instance's __call__ runs when this endpoint is accessed
+    """__call__ executes:
+    When the instance is used as a function
+    When FastAPI actually needs to check the authorization
+    For each request to a protected endpoint
+    Not during instance creation or dependency setup
+    """
     return user
 
 
