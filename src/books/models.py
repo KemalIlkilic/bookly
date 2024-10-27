@@ -1,7 +1,8 @@
-from sqlmodel import SQLModel, Field, Column
+from sqlmodel import Relationship, SQLModel, Field, Column
 import sqlalchemy.dialects.postgresql as pg
 from datetime import date, datetime
 import uuid
+from typing import Optional
 
 
 #Column is an SQLAlchemy component used to provide detailed information about database columns
@@ -18,6 +19,10 @@ class Book(SQLModel, table=True):
             default=uuid.uuid4
         )
     )
+    #
+    user_uid : Optional[uuid.UUID] = Field(default=None, foreign_key="users.uid")
+    user : Optional["User"] = Relationship(back_populates="books")
+    #
     title: str
     author : str
     publisher : str

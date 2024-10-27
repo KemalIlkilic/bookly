@@ -1,7 +1,8 @@
-from sqlmodel import Field, SQLModel, Column
+from sqlmodel import Field, Relationship, SQLModel, Column
 import sqlalchemy.dialects.postgresql as pg
 from datetime import date, datetime
 import uuid
+from typing import List
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
@@ -23,6 +24,7 @@ class User(SQLModel, table=True):
     password_hash : str = Field(exclude=True)
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
     update_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+    books : List["Book"] = Relationship(back_populates="user")
 
     def __repr__(self) -> str:
         return f"< User {self.username} >"

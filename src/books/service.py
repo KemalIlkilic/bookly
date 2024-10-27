@@ -19,12 +19,12 @@ class BookService:
         book = result.first()
         return book if book else None
 
-    async def create_book(self, book_data : BookCreateModel, session:AsyncSession):
+    async def create_book(self, book_data : BookCreateModel, user_uid : str, session:AsyncSession):
         book_dict = book_data.model_dump(exclude_unset=True)
         new_book = Book(**book_dict)
         if book_dict.get('published_date'):
             new_book.published_date = datetime.strptime(str(book_dict['published_date']), "%Y-%m-%d")
-        
+        new_book.user_uid = user_uid
         #adding an object to the session marks it as pending, meaning it will be inserted into the database when the transaction is committed.
         #session.add() is not an asynchronous operation because It's not communicating with the database at this point
         session.add(new_book)
