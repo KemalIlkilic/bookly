@@ -42,7 +42,7 @@ async def login_users(login_data: UserLoginModel, session : MyAsyncSession):
         is_password_true = verify_password(password, hashed_password_in_database )
         if is_password_true:
             access_token = create_access_token(
-                user_data= {'email' : user.email, 'user_uid' : str(user.uid)}
+                user_data= {'email' : user.email, 'user_uid' : str(user.uid), "role" : user.role}
             )
             refresh_token = create_access_token(
                 user_data= {'email' : user.email, 'user_uid' : str(user.uid)},
