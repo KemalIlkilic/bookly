@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from src.db.main import init_db
 from src.auth.routes import auth_router
 
+#alembic olmadan önce table ları olusturmak icin önemli olan bir mevzu.
 @asynccontextmanager
 async def life_span(app : FastAPI):
     #doing smth after server start
@@ -19,8 +20,8 @@ version = "v1"
 app = FastAPI(
     title="Bookly",
     description="A REST API for a book review web service",
-    version=version,
-    lifespan=life_span
+    version=version
+    #lifespan=life_span ,no more needed
 )
 
 app.include_router(book_router ,prefix=f"/api/{version}/books", tags=['books'])
