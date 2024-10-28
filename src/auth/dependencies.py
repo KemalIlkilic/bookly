@@ -8,7 +8,7 @@ from src.db.redis import token_in_blocklist
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from .service import UserService
-from src.auth.models import User
+from src.db.models import User
 
 
 class TokenBearer(HTTPBearer):

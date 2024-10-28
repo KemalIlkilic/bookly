@@ -1,11 +1,34 @@
-from sqlmodel import Relationship, SQLModel, Field, Column
+from sqlmodel import Field, Relationship, SQLModel, Column
 import sqlalchemy.dialects.postgresql as pg
 from datetime import date, datetime
 import uuid
-from typing import Optional
-from src.auth import models
+from typing import List, Optional
 
+class User(SQLModel, table=True):
+    __tablename__ = "users"
+    uid : uuid.UUID = Field(
+        sa_column=Column(
+            pg.UUID,
+            nullable=False,
+            primary_key=True,
+            default=uuid.uuid4
+        )
+    )
+    username : str
+    email : str
+    first_name : str
+    last_name : str
+    role : str = Field(sa_column=Column(pg.VARCHAR, nullable=False, server_default="user"))
+    is_verified : bool = Field(default=False)
+    #The original password is never stored
+    password_hash : str = Field(exclude=True)
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+    update_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+    books : List["Book"] = Relationship(back_populates="user", sa_relationship_kwargs={'lazy':'selectin'})
 
+    def __repr__(self) -> str:
+        return f"< User {self.username} >"
+    
 #Column is an SQLAlchemy component used to provide detailed information about database columns
 
 class Book(SQLModel, table=True):
@@ -22,7 +45,7 @@ class Book(SQLModel, table=True):
     )
     #
     user_uid : Optional[uuid.UUID] = Field(default=None, foreign_key="users.uid")
-    user : Optional["models.User"] = Relationship(back_populates="books")
+    user : Optional[User] = Relationship(back_populates="books")
     #
     title: str
     author : str
