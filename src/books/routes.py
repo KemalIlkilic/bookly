@@ -21,9 +21,16 @@ authorize = Depends(role_checker)
 async def get_all_books(session : MyAsyncSession, token_details : TokenDetails):
     #token_details : {'user': {'email': 'kemal@dmca.io', 'user_uid': '2e53a352-c25f-61cd281461'},
     #            'exp': 1729468596, 'jti': '<function uuid4 at 0x100f5cc20>', 'refresh': False}
-    print(token_details)
     books = await book_service.get_all_books(session)
     return books
+
+@book_router.get("/user/{user_uid}", response_model=List[Book], dependencies=[authorize])
+async def get_user_book_submissions(user_uid : str , session : MyAsyncSession, token_details : TokenDetails):
+    #token_details : {'user': {'email': 'kemal@dmca.io', 'user_uid': '2e53a352-c25f-61cd281461'},
+    #            'exp': 1729468596, 'jti': '<function uuid4 at 0x100f5cc20>', 'refresh': False}
+    books = await book_service.get_user_books(user_uid,session)
+    return books
+
 
 
 @book_router.post("/", status_code=status.HTTP_201_CREATED , response_model=Book, dependencies=[authorize])

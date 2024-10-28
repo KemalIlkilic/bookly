@@ -12,6 +12,11 @@ class BookService:
         statement = select(Book).order_by(desc(Book.created_at))
         result = await session.exec(statement)
         return result.all()
+    
+    async def get_user_books(self,user_id : str,  session:AsyncSession):
+        statement = select(Book).where(Book.user_uid == user_id)
+        result = await session.exec(statement)
+        return result.all()
 
     async def get_book(self, book_uid : str ,session:AsyncSession) -> dict:
         statement = select(Book).where(Book.uid == book_uid )
