@@ -26,9 +26,10 @@ class ReviewService:
                 )
             review_data_dict = review_data.model_dump()
 
-            new_review = Review(**review_data_dict)
-            new_review.user = user
-            new_review.book = book
+            #SQLModel will automatically set the user_uid and book_uid fields based on the user and book objects you provide.
+            #Relationships between the User and Book objects need to be properly set up in the database 
+            #For the automatic assignment of user_uid and book_uid in the Review model to work.
+            new_review = Review(**review_data_dict, user=user, book = book)
 
             session.add(new_review)
             await session.commit()
@@ -37,3 +38,36 @@ class ReviewService:
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                 detail="Ooops... Something went wrong")
+        
+
+    async def get_review(self, review_uid: str, session: AsyncSession):
+        statement = select(Review).where(Review.uid == review_uid)
+
+        result = await session.exec(statement)
+
+        return result.first()
+    
+    async def get_all_reviews(self, session: AsyncSession):
+        statement = select(Review).order_by(desc(Review.created_at))
+
+        result = await session.exec(statement)
+
+        return result.all()
+    
+
+    async def delete_review_to_from_book(
+        self, review_uid: str, user_email: str, session: AsyncSession
+    ):
+        user = await user_service.get_user_by_email(user_email, session)
+
+        review = await self.get_review(review_uid, session)
+
+        if not review or (review.user != user):
+            raise HTTPException(
+                detail="Cannot delete this review",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        session.delete(review)
+
+        await session.commit()
