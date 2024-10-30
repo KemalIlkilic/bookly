@@ -35,7 +35,12 @@ async def create_user_account(user_data : UserCreateModel , session : MyAsyncSes
     email = user_data.email
     is_exist = await user_service.user_exists_by_email(email , session)
     if is_exist:
+        # This:
         raise UserAlreadyExists()
+        # Gets caught by FastAPI, which then:
+        # 1. Sees it's a UserAlreadyExists exception
+        # 2. Looks up the registered handler
+        # 3. Returns the pre-defined response:
     new_user = await user_service.create_user(user_data, session)
     return new_user
 

@@ -80,16 +80,20 @@ class AccountNotVerified(Exception):
     """Account not yet verified"""
     pass
 
+#the function returns callable is expected to take two parameters: A Request object , An Exception object.
+#and callable function will return a JSONResponse.
 def create_exception_handler(status_code: int, initial_detail: Any) -> Callable[[Request, Exception], JSONResponse]:
+    #Fastapi exception handlers are going to take two parameters.
+    #First one is Request, second is the being Exception.
     async def exception_handler(request: Request, exc: BooklyException):
         return JSONResponse(content=initial_detail, status_code=status_code)
     return exception_handler
 
 
 def register_all_errors(app: FastAPI):
-    app.add_exception_handler(
-        UserAlreadyExists,
-        create_exception_handler(
+    app.add_exception_handler( 
+        UserAlreadyExists,  # What to catch
+        create_exception_handler(  # What to return
             status_code=status.HTTP_403_FORBIDDEN,
             initial_detail={
                 "message": "User with email already exists",
