@@ -10,6 +10,8 @@ from fastapi.responses import JSONResponse
 from datetime import timedelta, datetime
 from .dependencies import RefreshTokenBearer, AccessTokenBearer, get_current_user, RoleChecker
 from src.db.redis import add_jti_to_blocklist
+from src.errors import UserAlreadyExists, UserNotFound, InvalidCredentials, InvalidToken
+
 
 user_service = UserService()
 auth_router = APIRouter()
@@ -33,7 +35,7 @@ async def create_user_account(user_data : UserCreateModel , session : MyAsyncSes
     email = user_data.email
     is_exist = await user_service.user_exists_by_email(email , session)
     if is_exist:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User with email already exists")
+        raise UserAlreadyExists()
     new_user = await user_service.create_user(user_data, session)
     return new_user
 
@@ -66,7 +68,7 @@ async def login_users(login_data: UserLoginModel, session : MyAsyncSession):
                     }
                 }
             )
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid email or password")
+    raise InvalidCredentials()
 
 
 @auth_router.get('/refresh_token')
@@ -75,7 +77,7 @@ async def get_new_access_token(token_details : RefreshTokenDetails):
     if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
         new_access_token = create_access_token(user_data=token_details["user"])
         return JSONResponse(content={"access_token": new_access_token})
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired refresh token")
+    raise InvalidToken()
 
 @auth_router.get("/me", response_model=UserBooksModel)
 async def get_current_user(authorized : UserAndAdmin ,user = Depends(get_current_user)):

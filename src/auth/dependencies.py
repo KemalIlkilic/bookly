@@ -9,6 +9,13 @@ from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from .service import UserService
 from src.db.models import User
+from src.errors import (
+    InvalidToken,
+    RefreshTokenRequired,
+    AccessTokenRequired,
+    InsufficientPermission,
+    AccountNotVerified
+    )
 
 
 class TokenBearer(HTTPBearer):
@@ -38,23 +45,17 @@ class TokenBearer(HTTPBearer):
         token = creds.credentials
 
         if not self.token_valid(token):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={
-                "error": "This token is invalid or expired",
-                "resolution": "Please get new token"
-            })
+            raise InvalidToken()
         
         
         #token_data : {'user': {'email': 'kemal@dmca.io', 'user_uid': '2e53a3'},
         #              'exp': 1729468596, 'jti': '<function uuid4 at 0x100f5cc20>', 'refresh': False}
         token_data = decode_token(token)
         if not token_data:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="There is no data in token_data")
+            raise InvalidToken()
         
         if await token_in_blocklist(token_data['jti']):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={
-                "error": "This token is invalid or has been revoked",
-                "resolution": "Please get new token"
-            })
+            raise InvalidToken()
         """
         When the __call__ method runs, it calls self.verify_token_data(token_data).
         The interesting part is that self will refer to either an AccessTokenBearer or RefreshTokenBearer instance, not the base TokenBearer.
@@ -78,13 +79,13 @@ class TokenBearer(HTTPBearer):
 class AccessTokenBearer(TokenBearer):
     def verify_token_data(self,token_data : dict) -> None:
         if token_data and token_data["refresh"]:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please provide an access token")
+            raise AccessTokenRequired()
         #It means that it is not access token , actually it is refresh token
 
 class RefreshTokenBearer(TokenBearer):
     def verify_token_data(self, token_data: dict) -> None:
         if token_data and not token_data["refresh"]:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please provide an refresh token")
+            raise RefreshTokenRequired()
 
 access_token_bearer = AccessTokenBearer()
 AccessTokenDetails = Annotated[dict,Depends(access_token_bearer)]
@@ -128,8 +129,8 @@ class RoleChecker:
         self.allowed_roles =  allowed_roles
 
     def __call__(self, current_user : Annotated[User,Depends(get_current_user)]) -> Any:
+        if not current_user.is_verified:
+            raise AccountNotVerified()
         if current_user.role in self.allowed_roles:
             return True
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail = "You are not allowed to perform this action")
+        raise InsufficientPermission()
