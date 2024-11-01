@@ -1,5 +1,7 @@
 from fastapi import APIRouter , status , Depends
-from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel
+
+from ..mail import create_message, mail
+from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel, EmailModel
 from .service import UserService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
@@ -29,6 +31,20 @@ UserAndAdmin = Annotated[bool, Depends(RoleChecker(["admin", "user"]))]
 
 
 REFRESH_TOKEN_EXPIRY=7
+
+
+
+@auth_router.post("/send_mail")
+async def send_mail(emails: EmailModel):
+    emails = emails.addresses
+
+    html = "<h1>Welcome to the app</h1>"
+    subject = "Welcome to our app"
+
+    message = create_message(recipients=emails, subject=subject, body=html)
+    await mail.send_message(message)
+
+    return {"message": "Email sent successfully"}
 
 @auth_router.post('/signup' , response_model=UserModel, status_code=status.HTTP_201_CREATED)
 async def create_user_account(user_data : UserCreateModel , session : MyAsyncSession ):

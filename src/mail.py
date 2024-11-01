@@ -18,10 +18,10 @@ mail_config = ConnectionConfig(
     MAIL_STARTTLS=True,
     MAIL_SSL_TLS=False,
     USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True,
-    TEMPLATE_FOLDER=Path(BASE_DIR, "templates"),
+    #asagidaki true idi false yaptik duzeldi.
+    VALIDATE_CERTS=False,
+    #TEMPLATE_FOLDER=Path(BASE_DIR, "templates"),
 )
-
 
 # create the object to send emails with the config
 mail = FastMail(config=mail_config)
