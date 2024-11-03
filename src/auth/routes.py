@@ -1,4 +1,4 @@
-from fastapi import APIRouter , status , Depends
+from fastapi import APIRouter , status , Depends, BackgroundTasks
 
 from ..mail import create_message, mail
 from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel, EmailModel, PasswordResetRequestModel, PasswordResetConfirmModel
@@ -49,7 +49,7 @@ async def send_mail(emails: EmailModel):
     return {"message": "Email sent successfully"}
 
 @auth_router.post('/signup', status_code=status.HTTP_201_CREATED)
-async def create_user_account(user_data : UserCreateModel , session : MyAsyncSession ):
+async def create_user_account(user_data : UserCreateModel , bg_tasks : BackgroundTasks, session : MyAsyncSession ):
     email = user_data.email
     is_exist = await user_service.user_exists_by_email(email , session)
     if is_exist:
@@ -74,7 +74,7 @@ async def create_user_account(user_data : UserCreateModel , session : MyAsyncSes
     subject = "Verify Your email"
 
     message = create_message(recipients=emails, subject=subject, body=html)
-    await mail.send_message(message)
+    bg_tasks.add_task(mail.send_message,message)
 
     return {
         "message": "Account Created! Check email to verify your account",
@@ -165,11 +165,41 @@ async def revooke_token(token_details : AccessTokenDetails):
         content={"message": "Logged Out Successfully"}, status_code=status.HTTP_200_OK
     )
 
+
+
+@auth_router.post("/password-reset-request")
+async def password_reset_request(email_data: PasswordResetRequestModel):
+    email = email_data.email
+
+    token = create_url_safe_token({"email": email})
+
+    link = f"http://{Config.DOMAIN}/api/v1/auth/password-reset-confirm/{token}"
+
+    html_message = f"""
+    <h1>Reset Your Password</h1>
+    <p>Please click this <a href="{link}">link</a> to Reset Your Password</p>
+    """
+    subject = "Reset Your Password"
+
+    emails = [email]
+    message = create_message(recipients=emails, subject=subject, body=html_message)
+    await mail.send_message(message)
+
+    return JSONResponse(
+        content={
+            "message": "Please check your email for instructions to reset your password",
+        },
+        status_code=status.HTTP_200_OK,
+    )
+
+
+
+
 @auth_router.post("/password-reset-confirm/{token}")
 async def reset_account_password(
     token: str,
     passwords: PasswordResetConfirmModel,
-    session: AsyncSession = Depends(get_session),
+    session: MyAsyncSession,
 ):
     new_password = passwords.new_password
     confirm_password = passwords.confirm_new_password
