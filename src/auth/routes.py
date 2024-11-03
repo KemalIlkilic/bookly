@@ -1,13 +1,13 @@
 from fastapi import APIRouter , status , Depends
 
 from ..mail import create_message, mail
-from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel, EmailModel
+from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel, EmailModel, PasswordResetRequestModel, PasswordResetConfirmModel
 from .service import UserService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from typing import Annotated
 from fastapi.exceptions import  HTTPException
-from .utils import create_access_token, decode_token, verify_password, create_url_safe_token, decode_url_safe_token
+from .utils import create_access_token, decode_token, verify_password, create_url_safe_token, decode_url_safe_token, generate_password_hash
 from fastapi.responses import JSONResponse
 from datetime import timedelta, datetime
 from .dependencies import RefreshTokenBearer, AccessTokenBearer, get_current_user, RoleChecker
@@ -163,4 +163,43 @@ async def revooke_token(token_details : AccessTokenDetails):
 
     return JSONResponse(
         content={"message": "Logged Out Successfully"}, status_code=status.HTTP_200_OK
+    )
+
+@auth_router.post("/password-reset-confirm/{token}")
+async def reset_account_password(
+    token: str,
+    passwords: PasswordResetConfirmModel,
+    session: AsyncSession = Depends(get_session),
+):
+    new_password = passwords.new_password
+    confirm_password = passwords.confirm_new_password
+
+    if new_password != confirm_password:
+        raise HTTPException(
+            detail="Passwords do not match", status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    token_data = decode_url_safe_token(token)
+
+    user_email = token_data.get("email")
+    if user_email:
+        user = await user_service.get_user_by_email(user_email, session)
+
+        if not user:
+            raise UserNotFound()
+        
+        passwd_hash = generate_password_hash(new_password)
+
+        user.sqlmodel_update({"password_hash": passwd_hash})
+        session.add(user)
+        await session.commit()
+        session.refresh(user)
+
+        return JSONResponse(
+            content={"message": "Password reset Successfully"},
+            status_code=status.HTTP_200_OK,
+        )
+    return JSONResponse(
+        content={"message": "Error occured during password reset."},
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
