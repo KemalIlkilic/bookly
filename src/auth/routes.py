@@ -15,6 +15,7 @@ from src.db.redis import add_jti_to_blocklist
 from src.errors import UserAlreadyExists, UserNotFound, InvalidCredentials, InvalidToken
 from ..config import Config
 from src.db.models import User
+from ..celery_tasks import send_email
 
 
 user_service = UserService()
@@ -43,8 +44,9 @@ async def send_mail(emails: EmailModel):
     html = "<h1>Welcome to the app</h1>"
     subject = "Welcome to our app"
 
-    message = create_message(recipients=emails, subject=subject, body=html)
-    await mail.send_message(message)
+    """ message = create_message(recipients=emails, subject=subject, body=html)
+    await mail.send_message(message) """
+    send_email.delay(emails,subject,html)
 
     return {"message": "Email sent successfully"}
 
@@ -73,8 +75,7 @@ async def create_user_account(user_data : UserCreateModel , bg_tasks : Backgroun
 
     subject = "Verify Your email"
 
-    message = create_message(recipients=emails, subject=subject, body=html)
-    bg_tasks.add_task(mail.send_message,message)
+    send_email.delay(emails,subject,html)
 
     return {
         "message": "Account Created! Check email to verify your account",

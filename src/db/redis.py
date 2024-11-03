@@ -11,12 +11,7 @@ JTI_EXPIRY = 3600
     port = Config.REDIS_PORT,
     db=0
 ) """
-token_blocklist = aioredis.from_url(
-    f"redis://{Config.REDIS_HOST}:{Config.REDIS_PORT}",
-    db=0,
-    encoding="utf-8",
-    decode_responses=True
-)
+token_blocklist = aioredis.from_url(Config.REDIS_URL)
 
 async def add_jti_to_blocklist(jti : str) -> None:
     await token_blocklist.set(
