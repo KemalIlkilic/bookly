@@ -1,8 +1,6 @@
 # FastAPI Beyond CRUD 
 
-This is the source code for the [FastAPI Beyond CRUD](https://youtube.com/playlist?list=PLEt8Tae2spYnHy378vMlPH--87cfeh33P&si=rl-08ktaRjcm2aIQ) course. The course focuses on FastAPI development concepts that go beyond the basic CRUD operations.
-
-For more details, visit the project's [website](https://jod35.github.io/fastapi-beyond-crud-docs/site/).
+This is the source code for the personal fastapi project. The project focuses on FastAPI development concepts that go beyond the basic CRUD operations.
 
 ## Table of Contents
 
@@ -11,7 +9,6 @@ For more details, visit the project's [website](https://jod35.github.io/fastapi-
 3. [Project Setup](#project-setup)
 4. [Running the Application](#running-the-application)
 5. [Running Tests](#running-tests)
-6. [Contributing](#contributing)
 
 ## Getting Started
 Follow the instructions below to set up and run your FastAPI project.
@@ -26,12 +23,13 @@ Ensure you have the following installed:
 ### Project Setup
 1. Clone the project repository:
     ```bash
-    git clone https://github.com/jod35/fastapi-beyond-CRUD.git
+    
+    git clone https://github.com/KemalIlkilic/fastapi-bookly.git
     ```
    
 2. Navigate to the project directory:
     ```bash
-    cd fastapi-beyond-CRUD/
+    cd fastapi-bookly/
     ```
 
 3. Create and activate a virtual environment:
@@ -65,16 +63,10 @@ Start the application:
 
 ```bash
 fastapi dev src/
-```
-Alternatively, you can run the application using Docker:
-```bash
-docker compose up -d
-```
+``` 
+
 ## Running Tests
 Run the tests using this command
 ```bash
 pytest
 ```
-
-## Contributing
-I welcome contributions to improve the documentation! You can contribute [here](https://github.com/jod35/fastapi-beyond-crud-docs).
