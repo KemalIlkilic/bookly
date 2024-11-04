@@ -1,4 +1,4 @@
-# FastAPI Beyond CRUD 
+# FastAPI CRUD and Auth Project
 
 This is the source code for the personal fastapi project. The project focuses on FastAPI development concepts that go beyond the basic CRUD operations.
 
