@@ -25,12 +25,12 @@ Ensure you have the following installed:
 1. Clone the project repository:
     ```bash
     
-    git clone https://github.com/KemalIlkilic/fastapi-bookly.git
+    git clone https://github.com/KemalIlkilic/fastapi-bookAPI.git
     ```
    
 2. Navigate to the project directory:
     ```bash
-    cd fastapi-bookly/
+    cd fastapi-bookAPI/
     ```
 
 3. Create and activate a virtual environment:
