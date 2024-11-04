@@ -9,6 +9,7 @@ This is the source code for the personal fastapi project. The project focuses on
 3. [Project Setup](#project-setup)
 4. [Running the Application](#running-the-application)
 5. [Running Tests](#running-tests)
+6. [Project Screenshots](#screenshots)
 
 ## Getting Started
 Follow the instructions below to set up and run your FastAPI project.
@@ -70,3 +71,9 @@ Run the tests using this command
 ```bash
 pytest
 ```
+
+### Screenshots
+![API Screenshot](images/api-1.png)
+![API Screenshot](images/api-2.png)
+![Bearer Screenshot](images/auth.png)
+![Schemas Screenshot](images/schemas.png)
